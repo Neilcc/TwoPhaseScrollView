@@ -19,15 +19,20 @@ import java.util.List;
  * Created by zhuchengcheng on 15/10/29.
  */
 public class TwoPhaseScrollLayout extends LinearLayout {
+
     private int mDeltaY = 0;
+
     private View mContent;
     private View mHeader;
     private View mNav;
     private View mEmptyView;
     private ViewPager mViewPager;
-    private int mTopViewHeight;
+
     private ViewGroup mInnerScrollView;
+
+    private int mTopViewHeight;
     private boolean isTopHidden = false;
+
     private OverScroller mScroller;
     private VelocityTracker mVelocityTracker;
     private int mTouchSlop;
@@ -38,6 +43,7 @@ public class TwoPhaseScrollLayout extends LinearLayout {
     private boolean mDragging;
     private boolean isInControl = false;
     private Context mContext;
+
     private StickyNavFactoryInterface mFactory;
     private HeaderScrollListener mHeaderScrollListener;
     private TwoPhaseScrollLayout.TopHiddenListener mTopHiddenListener;
@@ -86,12 +92,9 @@ public class TwoPhaseScrollLayout extends LinearLayout {
         mHeader = mFactory.createHeaderView();
         mNav = mFactory.createNavView();
         mContent = mFactory.createContent();
-        mViewPager = mFactory.createViewPager();
-        if (factory instanceof DynaStickNavFactory) {
-            addHeaderView(mFactory.createHeaderView());
-            addNavView(mFactory.createNavView());
-            addViewPager(mFactory.createViewPager());
-        }
+        addHeaderView(mHeader);
+        addNavView(mNav);
+        addContentView(mContent);
     }
 
     @Override
@@ -111,10 +114,12 @@ public class TwoPhaseScrollLayout extends LinearLayout {
             }
             if (mContent != null) {
                 ViewGroup.LayoutParams params = mContent.getLayoutParams();
-                params.height = getMeasuredHeight() + mTopViewHeight;
+                if (mNav != null) {
+                    params.height = getMeasuredHeight() - mNav.getMeasuredHeight() - mDeltaY;
+                } else {
+                    params.height = getMeasuredHeight();
+                }
             }
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -327,7 +332,6 @@ public class TwoPhaseScrollLayout extends LinearLayout {
                 mContent.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT));
             }
-            removeAllViews();
             this.addView(contentView);
         }
 
@@ -337,7 +341,8 @@ public class TwoPhaseScrollLayout extends LinearLayout {
         if (headerView != null) {
             mHeader = headerView;
             if (mHeader.getLayoutParams() == null) {
-                mHeader.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                mHeader.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
             }
             this.addView(headerView);
         }
@@ -348,7 +353,8 @@ public class TwoPhaseScrollLayout extends LinearLayout {
         if (navView != null) {
             mNav = navView;
             if (mNav.getLayoutParams() == null) {
-                mNav.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 200));
+                mNav.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
             }
             this.addView(mNav);
         }
@@ -405,8 +411,9 @@ public class TwoPhaseScrollLayout extends LinearLayout {
 
     public boolean isHeaderTop() {
         this.updateInnerScrollView();
-        return this.getScrollY() != 0 ? false :
-                (null == this.mInnerScrollView) ? true : ScrollAbleViewHelper.isScrollToTop(mInnerScrollView);
+        return this.getScrollY() == 0
+                && ((null == this.mInnerScrollView)
+                || ScrollAbleViewHelper.isScrollToTop(mInnerScrollView));
 
     }
 
