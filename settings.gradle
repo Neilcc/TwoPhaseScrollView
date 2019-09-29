@@ -1,0 +1,2 @@
+include ':app', ':twophasescrollview'
+rootProject.name='My Application'
